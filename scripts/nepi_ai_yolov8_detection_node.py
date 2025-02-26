@@ -77,7 +77,7 @@ class Yolov8Detector():
         if self.all_namespace == "":
             self.all_namespace = self.node_namespace
         self.weight_file_path = nepi_ros.get_param(self,"~weight_file_path","")
-        if self.weight_file_path == "" or self.yolov8_path == "":
+        if self.weight_file_path == "":
             nepi_msg.publishMsgWarn(self,"Failed to get required node info from param server: ")
             rospy.signal_shutdown("Failed to get valid model info from param")
         else:
@@ -135,6 +135,7 @@ class Yolov8Detector():
 
 
     def processDetection(self,cv2_img, threshold):
+        start_time = time.time()
         # Example image
         #img = 'https://ultralytics.com/images/zidane.jpg'
         # Convert BW image to RGB
@@ -150,23 +151,28 @@ class Yolov8Detector():
 
         # Update model settings
         self.model.conf = threshold  # Confidence threshold (0-1)
-        #self.model.iou = 0.45  # NMS IoU threshold (0-1)
-        #self.model.max_det = 20  # Maximum number of detections per image
-        #self.model.eval()
-        # Run the detection model on tensor
+
 
         try:
             # Inference
             results = self.model(cv2_img, conf=threshold)
-            nepi_msg.publishMsgInfo(self,"Got Yolov8 detection result: " + str(results))
+            nepi_msg.publishMsgInfo(self,"Got Yolov8 detection result: " + str(results.boxes))
         except Exception as e:
             nepi_msg.publishMsgInfo(self,"Failed to process img with exception: " + str(e))
         detect_dict_list = []
-        for i, label in enumurate(results.cls):
+        '''
+        for i, label in enumerate(results):
             det_name = label
             det_id = self.classes.index(det_name)
             det_prob = results.conf[i]
-            det_box = results.xywhn.[i]
+            det_box = results.xywhn[i]
+     
+        for i, label in enumerate(results.cls):
+            det_name = label
+            det_id = self.classes.index(det_name)
+            det_prob = results.conf[i]
+            det_box = results.xywhn[i]
+       
             
             detect_dict = {
                 'name': str(label), # Class String Name
@@ -182,9 +188,11 @@ class Yolov8Detector():
                 'area_pixels': det_box[2] * det_box[3],
                 'area_ratio': (det_box[2] * det_box[3]) / cv2_img_area,
             }
-            #nepi_msg.publishMsgInfo(self,"Got detect dict entry: " + str(detect_dict))
-
-        return detect_dict_list
+            nepi_msg.publishMsgInfo(self,"Got detect dict entry: " + str(detect_dict))
+        '''
+        detect_time = round( (time.time() - start_time) , 3)
+        #nepi_msg.publishMsgInfo(self,"Detect Time: {:.2f}".format(detect_time))
+        return detect_dict_list, detect_time
 
 
 
