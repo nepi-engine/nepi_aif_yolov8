@@ -9,5 +9,4 @@ node_file_dict:
 launch_pkg_name: nepi_aif_yolov8
 launch_file_name: yolov8_ros.launch
 models_folder_name: yolov8
-model_prefix: yolov8_
 supports_preload: True

@@ -48,7 +48,6 @@ TEST_AI_DICT = {
 'if_module_name': 'aif_yolov8_if', 
 'if_class_name': 'Yolov8AIF', 
 'models_folder_name': 'yolov8', 
-'model_prefix': 'yolov8_', 
 'launch_pkg_name': 'nepi_aif_yolov8',
 'launch_file_name': 'yolov8_ros.launch', 
 'node_file_name': 'nepi_ai_yolov8_detection_node.py',  
@@ -78,7 +77,6 @@ class Yolov8AIF(object):
       self.node_file_dict = ai_dict['node_file_dict']
       self.launch_pkg = ai_dict['launch_pkg_name']
       self.launch_file = ai_dict['launch_file_name']
-      self.model_prefix = ai_dict['model_prefix']
       self.models_folder = ai_dict['models_folder_name']
       self.models_folder_path =  os.path.join(self.models_lib_path, self.models_folder)
       nepi_msg.printMsgInfo("Yolov8 models path: " + self.models_folder_path)
@@ -150,7 +148,7 @@ class Yolov8AIF(object):
 
                 param_file = os.path.basename(f)
                 framework = cfg_dict[model_key]["framework"]["name"]
-                model_name = self.model_prefix + os.path.splitext(param_file)[0]
+                model_name = os.path.splitext(param_file)[0]
 
                 
                 if framework != 'yolov8':

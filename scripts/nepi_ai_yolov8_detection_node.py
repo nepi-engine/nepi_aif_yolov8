@@ -147,7 +147,7 @@ class Yolov8Detector():
         cv2_img_width = cv2_img_shape[1]
         cv2_img_height = cv2_img_shape[0]
         cv2_img_area = cv2_img_shape[0] * cv2_img_shape[1]
-        #nepi_msg.publishMsgInfo(self,"Original image size: " + str(orig_size))
+        #nepi_msg.publishMsgWarn(self,"Original image size: " + str(orig_size))
 
         # Update model settings
         self.model.conf = threshold  # Confidence threshold (0-1)
@@ -156,42 +156,52 @@ class Yolov8Detector():
         try:
             # Inference
             results = self.model(cv2_img, conf=threshold)
-            nepi_msg.publishMsgInfo(self,"Got Yolov8 detection result: " + str(results.boxes))
+              
+            boxes_data = result.boxes
+            orig_shape = (cv2_img_height,cv2_img_width)
+            det_data = Boxes(boxes_data, orig_shape)
+            nepi_msg.publishMsgWarn(self,"Got Yolov11 detection results: " + str(det_data.xyxyn))
+            '''
+            #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection results: " + str(results[0].boxes))
+            ids = results[0].boxes.cls.to('cpu').tolist()
+            #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection ids: " + str(ids))
+            boxes = results[0].boxes.xyxy.to('cpu').tolist()
+            nepi_msg.publishMsgWarn(self,"Got Yolov8 detection boxes: " + str(boxes))
+            confs = results[0].boxes.conf.to('cpu').tolist()
+            #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection confs: " + str(confs))
+            '''
         except Exception as e:
-            nepi_msg.publishMsgInfo(self,"Failed to process img with exception: " + str(e))
+            nepi_msg.publishMsgInfo(self,"Failed to process detection with exception: " + str(e))
+    
         detect_dict_list = []
         '''
-        for i, label in enumerate(results):
-            det_name = label
-            det_id = self.classes.index(det_name)
-            det_prob = results.conf[i]
-            det_box = results.xywhn[i]
-     
-        for i, label in enumerate(results.cls):
-            det_name = label
-            det_id = self.classes.index(det_name)
-            det_prob = results.conf[i]
-            det_box = results.xywhn[i]
-       
-            
+
+        for i, idf in enumerate(ids):
+            id = int(idf)
+            det_name = self.classes[id]
+            det_id = id
+            det_prob = confs[i]
+            det_box = boxes[i]
+            det_area = (det_box[2] - det_box[0]) * (det_box[3] - det_box[1])
             detect_dict = {
-                'name': str(label), # Class String Name
+                'name': det_name, # Class String Name
                 'id': det_id, # Class Index from Classes List
                 'uid': '', # Reserved for unique tracking by downstream applications
                 'prob': det_prob, # Probability of detection
-                'xmin': det_box[0] - int(det_box[2]/2),
-                'ymin': det_box[1] - int(det_box[3]/2) ,
-                'xmax': det_box[0] + int(det_box[2]/2),
-                'ymax': det_box[1] + int(det_box[3]/2),
-                'width_pixels': img_width,
-                'height_pixels': img_height,
-                'area_pixels': det_box[2] * det_box[3],
-                'area_ratio': (det_box[2] * det_box[3]) / cv2_img_area,
+                'xmin': int(det_box[0] ),
+                'ymin': int(det_box[1] ) ,
+                'xmax': int(det_box[2] ),
+                'ymax': int(det_box[3]),
+                'width_pixels': cv2_img_width,
+                'height_pixels': cv2_img_height,
+                'area_pixels': int(det_area),
+                'area_ratio': det_area / cv2_img_area
             }
+            detect_dict_list.append(detect_dict)
             nepi_msg.publishMsgInfo(self,"Got detect dict entry: " + str(detect_dict))
         '''
         detect_time = round( (time.time() - start_time) , 3)
-        #nepi_msg.publishMsgInfo(self,"Detect Time: {:.2f}".format(detect_time))
+        nepi_msg.publishMsgWar(nself,"Detect Time: {:.2f}".format(detect_time))
         return detect_dict_list, detect_time
 
 
