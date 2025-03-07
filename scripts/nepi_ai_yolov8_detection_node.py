@@ -141,8 +141,6 @@ class Yolov8Detector():
         # Convert BW image to RGB
         if cv2_img.shape[2] != 3:
             cv2_img = cv2.cvtColor(cv2_img, cv2.COLOR_GRAY2BGR)
-        # Convert BGR image to RGB image
-        cv2_img = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
         cv2_img_shape = cv2_img.shape
         cv2_img_width = cv2_img_shape[1]
         cv2_img_height = cv2_img_shape[0]
@@ -155,26 +153,22 @@ class Yolov8Detector():
 
         try:
             # Inference
-            results = self.model(cv2_img, conf=threshold)
-              
-            boxes_data = result.boxes
-            orig_shape = (cv2_img_height,cv2_img_width)
-            det_data = Boxes(boxes_data, orig_shape)
-            nepi_msg.publishMsgWarn(self,"Got Yolov11 detection results: " + str(det_data.xyxyn))
-            '''
+            results = self.model(cv2_img, conf=threshold, verbose=False)
+            #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection results: " + str(results[0].boxes))
+      
             #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection results: " + str(results[0].boxes))
             ids = results[0].boxes.cls.to('cpu').tolist()
             #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection ids: " + str(ids))
             boxes = results[0].boxes.xyxy.to('cpu').tolist()
-            nepi_msg.publishMsgWarn(self,"Got Yolov8 detection boxes: " + str(boxes))
+            #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection boxes: " + str(boxes))
             confs = results[0].boxes.conf.to('cpu').tolist()
             #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection confs: " + str(confs))
-            '''
+         
         except Exception as e:
             nepi_msg.publishMsgInfo(self,"Failed to process detection with exception: " + str(e))
     
         detect_dict_list = []
-        '''
+     
 
         for i, idf in enumerate(ids):
             id = int(idf)
@@ -198,10 +192,10 @@ class Yolov8Detector():
                 'area_ratio': det_area / cv2_img_area
             }
             detect_dict_list.append(detect_dict)
-            nepi_msg.publishMsgInfo(self,"Got detect dict entry: " + str(detect_dict))
-        '''
+            #nepi_msg.publishMsgInfo(self,"Got detect dict entry: " + str(detect_dict))
+        
         detect_time = round( (time.time() - start_time) , 3)
-        nepi_msg.publishMsgWar(nself,"Detect Time: {:.2f}".format(detect_time))
+        #nepi_msg.publishMsgWarn(self,"Detect Time: {:.2f}".format(detect_time))
         return detect_dict_list, detect_time
 
 

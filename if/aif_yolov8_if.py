@@ -157,9 +157,10 @@ class Yolov8AIF(object):
 
 
 
-                #nepi_msg.printMsgWarn("ai_yolov8_if: Checking that model weights file exists: " + weight_file_path + " for model name " + model_name)
+               
                 weight_file = cfg_dict[model_key]["weight_file"]["name"]
                 weight_file_path = os.path.join(self.models_folder_path,weight_file)
+                #nepi_msg.printMsgWarn("ai_yolov8_if: Checking that model weights file exists: " + weight_file_path + " for model name " + model_name)
                 if not os.path.exists(weight_file_path):
                     nepi_msg.printMsgWarn("ai_yolov8_if: Model " + model_name + " specifies non-existent weights file " + weight_file_path + "... not adding this model")
                     continue
@@ -171,20 +172,23 @@ class Yolov8AIF(object):
                     node_file_name = self.node_file_dict[model_type]
                 model_size = int(os.path.getsize(weight_file_path) / 1000000)
                 model_dict = dict()
-                model_dict['param_file'] = param_file
-                model_dict['framework'] = framework
-                model_dict['model_name'] = model_name
-                model_dict['model_path'] = self.models_folder_path
-                model_dict['type'] = model_type
-                model_dict['description'] = cfg_dict[model_key]['description']['name']
-                model_dict['img_height'] = cfg_dict[model_key]['image_size']['image_height']['value']
-                model_dict['img_width'] = cfg_dict[model_key]['image_size']['image_width']['value']
-                model_dict['classes'] = cfg_dict[model_key]['classes']['names']
-                model_dict['weight_file']= weight_file
-                model_dict['node_file_name'] = node_file_name
-                model_dict['size'] = model_size
-                model_dict['load_time'] = self.TYPICAL_LOAD_TIME_PER_MB * model_size / 1000000
-                nepi_msg.printMsgInfo("ai_yolov8_if: Model dict create for model : " + model_name)
+                try:
+                    model_dict['param_file'] = param_file
+                    model_dict['framework'] = framework
+                    model_dict['model_name'] = model_name
+                    model_dict['model_path'] = self.models_folder_path
+                    model_dict['type'] = model_type
+                    model_dict['description'] = cfg_dict[model_key]['description']['name']
+                    model_dict['img_height'] = cfg_dict[model_key]['image_size']['image_height']['value']
+                    model_dict['img_width'] = cfg_dict[model_key]['image_size']['image_width']['value']
+                    model_dict['classes'] = cfg_dict[model_key]['classes']['names']
+                    model_dict['weight_file']= weight_file
+                    model_dict['node_file_name'] = node_file_name
+                    model_dict['size'] = model_size
+                    model_dict['load_time'] = self.TYPICAL_LOAD_TIME_PER_MB * model_size / 1000000
+                    nepi_msg.printMsgInfo("ai_yolov11_if: Model dict create for model : " + model_name)
+                except Exception as e:
+                    nepi_msg.printMsgInfo("ai_yolov11_if: Failed to get model info : " + str(e))
                 models_dict[model_name] = model_dict
             #nepi_msg.printMsgWarn("Model returning models dict" + str(models_dict))
         return models_dict
