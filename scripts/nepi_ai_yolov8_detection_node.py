@@ -92,8 +92,8 @@ class Yolov8Detector():
                     model_type = model_info['type']['name']
                     model_description = model_info['description']['name']
                     self.classes = model_info['classes']['names']
-                    self.img_width = model_info['image_size']['image_width']['value']
-                    self.img_height = model_info['image_size']['image_height']['value']
+                    self.proc_img_width = model_info['image_size']['image_width']['value']
+                    self.proc_img_height = model_info['image_size']['image_height']['value']
                 except Exception as e:
                     nepi_msg.publishMsgWarn(self,"Failed to get required model info from params: " + str(e))
                     rospy.signal_shutdown("Failed to get valid model file paths")
@@ -117,12 +117,14 @@ class Yolov8Detector():
                 self.ai_if = AiDetectorIF(model_name = self.node_name,
                                     framework = model_framework,
                                     description = model_description,
-                                    img_height = self.img_height,
-                                    img_width = self.img_width,
+                                    proc_img_height = self.proc_img_height,
+                                    proc_img_width = self.proc_img_width,
                                     classes_list = self.classes,
                                     defualt_config_dict = self.defualt_config_dict,
                                     all_namespace = self.all_namespace,
-                                    processDetectionFunction = self.processDetection)
+                                    preprocessImageFunction = self.preprocessImage,
+                                    processDetectionFunction = self.processDetection,
+                                    has_img_tiling = False)
 
                 #########################################################
                 ## Initiation Complete
@@ -134,69 +136,99 @@ class Yolov8Detector():
 
 
 
-    def processDetection(self,cv2_img, threshold):
-        start_time = time.time()
-        # Example image
-        #img = 'https://ultralytics.com/images/zidane.jpg'
+    def preprocessImage(self,cv2_img,options_dict):
+        height, width = cv2_img.shape[:2]
+        
+        # For Future
+        '''
+        tile = False
+        if 'tile'  in options_dict.keys():
+            tile = options_dict['tile']
+        '''
+        
+        
         # Convert BW image to RGB
         if cv2_img.shape[2] != 3:
             cv2_img = cv2.cvtColor(cv2_img, cv2.COLOR_GRAY2BGR)
-        cv2_img_shape = cv2_img.shape
-        cv2_img_width = cv2_img_shape[1]
-        cv2_img_height = cv2_img_shape[0]
-        cv2_img_area = cv2_img_shape[0] * cv2_img_shape[1]
-        #nepi_msg.publishMsgWarn(self,"Original image size: " + str(orig_size))
 
-        # Update model settings
-        self.model.conf = threshold  # Confidence threshold (0-1)
+        # Create image dict with new image
+        img_dict = dict()
+        img_dict['cv2_img'] = cv2_img
+        img_shape = cv2_img.shape
+        img_dict['org_width'] = width 
+        img_dict['orig_height'] = height 
+        img_dict['tiling'] = False
+
+        return img_dict
 
 
-        try:
-            # Inference
-            results = self.model(cv2_img, conf=threshold, verbose=False)
-            #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection results: " + str(results[0].boxes))
-      
-            #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection results: " + str(results[0].boxes))
-            ids = results[0].boxes.cls.to('cpu').tolist()
-            #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection ids: " + str(ids))
-            boxes = results[0].boxes.xyxy.to('cpu').tolist()
-            #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection boxes: " + str(boxes))
-            confs = results[0].boxes.conf.to('cpu').tolist()
-            #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection confs: " + str(confs))
-         
-        except Exception as e:
-            nepi_msg.publishMsgInfo(self,"Failed to process detection with exception: " + str(e))
-    
+
+    def processDetection(self,img_dict, threshold):
         detect_dict_list = []
-     
+        tile = False
+        # For Future
+        #if 'tile'  in options_dict.keys():
+        #    tile = options_dict['tile']
+        if img_dict is not None:
+            if 'cv2_img' in img_dict.keys():
+                cv2_img = img_dict['cv2_img']
+                if cv2_img is not None:
 
-        for i, idf in enumerate(ids):
-            id = int(idf)
-            det_name = self.classes[id]
-            det_id = id
-            det_prob = confs[i]
-            det_box = boxes[i]
-            det_area = (det_box[2] - det_box[0]) * (det_box[3] - det_box[1])
-            detect_dict = {
-                'name': det_name, # Class String Name
-                'id': det_id, # Class Index from Classes List
-                'uid': '', # Reserved for unique tracking by downstream applications
-                'prob': det_prob, # Probability of detection
-                'xmin': int(det_box[0] ),
-                'ymin': int(det_box[1] ) ,
-                'xmax': int(det_box[2] ),
-                'ymax': int(det_box[3]),
-                'width_pixels': cv2_img_width,
-                'height_pixels': cv2_img_height,
-                'area_pixels': int(det_area),
-                'area_ratio': det_area / cv2_img_area
-            }
-            detect_dict_list.append(detect_dict)
-            #nepi_msg.publishMsgInfo(self,"Got detect dict entry: " + str(detect_dict))
-        
-        detect_time = round( (time.time() - start_time) , 3)
-        #nepi_msg.publishMsgWarn(self,"Detect Time: {:.2f}".format(detect_time))
-        return detect_dict_list, detect_time
+                    # Convert BGR image RGB
+                    cv2_img = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
+
+                    cv2_img = img_dict['cv2_img']
+                    cv2_img_shape = cv2_img.shape
+                    cv2_img_width = cv2_img_shape[1]
+                    cv2_img_height = cv2_img_shape[0]
+                    cv2_img_area = cv2_img_shape[0] * cv2_img_shape[1]
+                    #nepi_msg.publishMsgWarn(self,"Original image size: " + str(orig_size))
+
+                    # Update model settings
+                    self.model.conf = threshold  # Confidence threshold (0-1)
+
+                    try:
+                        # Inference
+                        results = self.model(cv2_img, conf=threshold, verbose=False)
+                        #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection results: " + str(results[0].boxes))
+                
+                        #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection results: " + str(results[0].boxes))
+                        ids = results[0].boxes.cls.to('cpu').tolist()
+                        #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection ids: " + str(ids))
+                        boxes = results[0].boxes.xyxy.to('cpu').tolist()
+                        #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection boxes: " + str(boxes))
+                        confs = results[0].boxes.conf.to('cpu').tolist()
+                        #nepi_msg.publishMsgWarn(self,"Got Yolov8 detection confs: " + str(confs))
+                    
+                    except Exception as e:
+                        nepi_msg.publishMsgInfo(self,"Failed to process detection with exception: " + str(e))
+                
+
+                    for i, idf in enumerate(ids):
+                        id = int(idf)
+                        det_name = self.classes[id]
+                        det_id = id
+                        det_prob = confs[i]
+                        det_box = boxes[i]
+                        det_area = (det_box[2] - det_box[0]) * (det_box[3] - det_box[1])
+                        detect_dict = {
+                            'name': det_name, # Class String Name
+                            'id': det_id, # Class Index from Classes List
+                            'uid': '', # Reserved for unique tracking by downstream applications
+                            'prob': det_prob, # Probability of detection
+                            'xmin': int(det_box[0] ),
+                            'ymin': int(det_box[1] ) ,
+                            'xmax': int(det_box[2] ),
+                            'ymax': int(det_box[3]),
+                            'width_pixels': cv2_img_width,
+                            'height_pixels': cv2_img_height,
+                            'area_pixels': int(det_area),
+                            'area_ratio': det_area / cv2_img_area
+                        }
+                        detect_dict_list.append(detect_dict)
+                        #nepi_msg.publishMsgInfo(self,"Got detect dict entry: " + str(detect_dict))
+            
+        return detect_dict_list
 
 
 
