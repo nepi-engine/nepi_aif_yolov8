@@ -31,27 +31,12 @@ from ultralytics import YOLO
 from nepi_sdk import nepi_ros
 from nepi_sdk import nepi_msg
 from nepi_sdk import nepi_img
+from nepi_sdk import nepi_ais
 
 from nepi_sdk.ai_detector_if import AiDetectorIF
 
 # Define your PyTorch model and load the weights
 # model = ...
-
-
-TEST_DETECTION_DICT_ENTRY = {
-    'name': 'TEST_DATA', # Class String Name
-    'id': 1, # Class Index from Classes List
-    'uid': '', # Reserved for unique tracking by downstream applications
-    'prob': .3, # Probability of detection
-    'xmin': 10,
-    'ymin': 10,
-    'xmax': 50,
-    'ymax': 50,
-    'width_pixels': 40,
-    'height_pixels': 40,
-    'area_pixels': 16000,
-    'area_ratio': 0.22857
-}
 
 
 
@@ -145,19 +130,22 @@ class Yolov8Detector():
         if 'tile'  in options_dict.keys():
             tile = options_dict['tile']
         '''
-        cv2_img = nepi_img.resize_proportionally(cv2_img, self.proc_img_width,self.proc_img_height,interp = cv2.INTER_NEAREST)
-        
+         [cv2_img,ratio,new_width,new_height] = nepi_img.resize_proportionally(cv2_img, self.proc_img_width,self.proc_img_height,interp = cv2.INTER_NEAREST)
         
         # Convert BW image to RGB
         if nepi_img.is_gray(cv2_img):
             cv2_img = cv2.cvtColor(cv2_img, cv2.COLOR_GRAY2BGR)
 
+        #nepi_msg.publishMsgInfo(self,":yolov5: Preprocessed image with image size: " + str(cv2_img.shape))
         # Create image dict with new image
         img_dict = dict()
         img_dict['cv2_img'] = cv2_img
         img_shape = cv2_img.shape
-        img_dict['org_width'] = width 
-        img_dict['orig_height'] = height 
+        img_dict['src_width'] = width 
+        img_dict['src_height'] = height 
+        img_dict['prc_width'] = new_width 
+        img_dict['prc_height'] = new_height 
+        img_dict['ratio'] = ratio 
         img_dict['tiling'] = False
 
         return img_dict
@@ -183,7 +171,7 @@ class Yolov8Detector():
                     cv2_img_width = cv2_img_shape[1]
                     cv2_img_height = cv2_img_shape[0]
                     cv2_img_area = cv2_img_shape[0] * cv2_img_shape[1]
-                    #nepi_msg.publishMsgWarn(self,"Original image size: " + str(orig_size))
+
 
                     # Update model settings
                     self.model.conf = threshold  # Confidence threshold (0-1)
@@ -204,7 +192,7 @@ class Yolov8Detector():
                     except Exception as e:
                         nepi_msg.publishMsgInfo(self,"Failed to process detection with exception: " + str(e))
                 
-
+                    rescale_ratio = float(1) / img_dict['ratio']
                     for i, idf in enumerate(ids):
                         id = int(idf)
                         det_name = self.classes[id]
@@ -221,11 +209,14 @@ class Yolov8Detector():
                             'ymin': int(det_box[1] ) ,
                             'xmax': int(det_box[2] ),
                             'ymax': int(det_box[3]),
-                            'width_pixels': cv2_img_width,
-                            'height_pixels': cv2_img_height,
                             'area_pixels': int(det_area),
                             'area_ratio': det_area / cv2_img_area
                         }
+                        # Rescale to orig image size
+                        detect_dict['xmin'] = int(detect_dict['xmin'] * rescale_ratio)
+                        detect_dict['ymin'] = int(detect_dict['ymin'] * rescale_ratio)
+                        detect_dict['xmax'] = int(detect_dict['xmax'] * rescale_ratio)
+                        detect_dict['ymax'] = int(detect_dict['ymax'] * rescale_ratio)
                         detect_dict_list.append(detect_dict)
                         #nepi_msg.publishMsgInfo(self,"Got detect dict entry: " + str(detect_dict))
             
