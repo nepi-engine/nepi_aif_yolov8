@@ -137,7 +137,7 @@ class Yolov8Detector():
         if 'tile'  in options_dict.keys():
             tile = options_dict['tile']
         '''
-         [cv2_img,ratio,new_width,new_height] = nepi_img.resize_proportionally(cv2_img, self.proc_img_width,self.proc_img_height,interp = cv2.INTER_NEAREST)
+        [cv2_img,ratio,new_width,new_height] = nepi_img.resize_proportionally(cv2_img, self.proc_img_width,self.proc_img_height,interp = cv2.INTER_NEAREST)
         
         # Convert BW image to RGB
         if nepi_img.is_gray(cv2_img):
