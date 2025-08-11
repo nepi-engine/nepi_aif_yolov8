@@ -37,7 +37,7 @@ TEST_AI_DICT = {
 'description': 'Yolov8 ai framework support', 
 'pkg_name': 'nepi_aif_yolov8', 
 'if_file_name': 'aif_yolov8_if.py', 
-'if_path_name': '/opt/nepi/ros/share/nepi_aifs', 
+'if_path_name': '/opt/nepi/engine/share/nepi_aifs', 
 'if_module_name': 'aif_yolov8_if', 
 'if_class_name': 'Yolov8AIF', 
 'models_folder_name': 'yolov8', 
@@ -164,7 +164,7 @@ class Yolov8AIF(object):
                     continue
                 else:
                     node_file_name = self.node_file_dict[model_type]
-                model_size_mb = float(os.path.getsize(weight_file_path) / 1000000)
+                model_size_mb = float(os.path.getsize(weight_file_path) / 3.500)
                 model_dict = dict()
                 try:
                     model_dict['param_file'] = param_file
