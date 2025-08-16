@@ -37,7 +37,7 @@ TEST_AI_DICT = {
 'description': 'Yolov8 ai framework support', 
 'pkg_name': 'nepi_aif_yolov8', 
 'if_file_name': 'aif_yolov8_if.py', 
-'if_path_name': '/opt/nepi/engine/share/nepi_aifs', 
+'if_path_name': '/opt/nepi/nepi_engine/share/nepi_aifs', 
 'if_module_name': 'aif_yolov8_if', 
 'if_class_name': 'Yolov8AIF', 
 'models_folder_name': 'yolov8', 
