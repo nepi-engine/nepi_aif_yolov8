@@ -106,8 +106,8 @@ class Yolov8Detector():
                 # Initialize Detector with Blank Img
                 self.msg_if.pub_info("Initializing detector with blank img")
                 init_cv2_img=nepi_img.create_cv2_blank_img()
-                init_cv2_img=self.preprocessImage(init_cv2_img)
-                det_dict=self.processDetection(init_cv2_img)
+                img_dict=self.preprocessImage(init_cv2_img)
+                det_dict=self.processDetection(img_dict)
 
                 self.msg_if.pub_info("Starting ai_if with default_config_dict: " + str(self.default_config_dict))
                 self.ai_if = AiDetectorIF(
@@ -134,7 +134,7 @@ class Yolov8Detector():
 
 
 
-    def preprocessImage(self,cv2_img,options_dict):
+    def preprocessImage(self,cv2_img,options_dict=dict()):
         height, width = cv2_img.shape[:2]
         
         # For Future
@@ -165,7 +165,7 @@ class Yolov8Detector():
 
 
 
-    def processDetection(self,img_dict, threshold):
+    def processDetection(self,img_dict, threshold = 0.3):
         detect_dict_list = []
         tile = False
         # For Future

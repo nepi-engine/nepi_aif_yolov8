@@ -164,7 +164,7 @@ class Yolov8AIF(object):
                     continue
                 else:
                     node_file_name = self.node_file_dict[model_type]
-                model_size_mb = float(os.path.getsize(weight_file_path) / 3.500)
+                model_size_mb = float(os.path.getsize(weight_file_path) / 1000000)
                 model_dict = dict()
                 try:
                     model_dict['param_file'] = param_file
