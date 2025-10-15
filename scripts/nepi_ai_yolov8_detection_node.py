@@ -143,8 +143,8 @@ class Yolov8Detector():
         if 'tile'  in options_dict.keys():
             tile = options_dict['tile']
         '''
-        [cv2_img,ratio,new_width,new_height] = nepi_img.resize_proportionally(cv2_img, self.proc_img_width,self.proc_img_height,interp = cv2.INTER_NEAREST)
-        
+        #[cv2_img,ratio,new_width,new_height] = nepi_img.resize_proportionally(cv2_img, self.proc_img_width,self.proc_img_height,interp = cv2.INTER_NEAREST)
+        new_height, new_width = cv2_img.shape[:2]
         # Convert BW image to RGB
         if nepi_img.is_gray(cv2_img):
             cv2_img = cv2.cvtColor(cv2_img, cv2.COLOR_GRAY2BGR)
@@ -192,15 +192,15 @@ class Yolov8Detector():
                     try:
                         # Inference
                         results = self.model(cv2_img, conf=threshold, verbose=False)
-                        #self.msg_if.pub_warn("Got Yolov8 detection results: " + str(results[0].boxes))
+                        self.msg_if.pub_warn("Got Yolov8 detection results: " + str(results[0].boxes))
                 
-                        #self.msg_if.pub_warn("Got Yolov8 detection results: " + str(results[0].boxes))
+                        self.msg_if.pub_warn("Got Yolov8 detection results: " + str(results[0].boxes))
                         ids = results[0].boxes.cls.to('cpu').tolist()
-                        #self.msg_if.pub_warn("Got Yolov8 detection ids: " + str(ids))
+                        self.msg_if.pub_warn("Got Yolov8 detection ids: " + str(ids))
                         boxes = results[0].boxes.xyxy.to('cpu').tolist()
-                        #self.msg_if.pub_warn("Got Yolov8 detection boxes: " + str(boxes))
+                        self.msg_if.pub_warn("Got Yolov8 detection boxes: " + str(boxes))
                         confs = results[0].boxes.conf.to('cpu').tolist()
-                        #self.msg_if.pub_warn("Got Yolov8 detection confs: " + str(confs))
+                        self.msg_if.pub_warn("Got Yolov8 detection confs: " + str(confs))
                     
                     except Exception as e:
                         self.msg_if.pub_info("Failed to process detection with exception: " + str(e))
