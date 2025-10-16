@@ -97,6 +97,15 @@ class Yolov8Detector():
                     self.msg_if.pub_warn("Model not a valid type: " + model_type)
                     nepi_sdk.signal_shutdown("Model not a valid type")
 
+                self.device = 'cpu'
+                has_cuda = torch.cuda.is_available()
+                self.msg_if.pub_warn("CUDA available: " + str(has_cuda))
+                if has_cuda == True:
+                    cuda_count = torch.cuda.device_count()
+                    self.msg_if.pub_warn("CUDA GPU Count: " + str(cuda_count))
+                    if cuda_count > 0:
+                        self.device = 'cuda'
+
                 self.msg_if.pub_info("Loading model: " + self.node_name)
                 self.model = YOLO(self.weight_file_path)
 
@@ -191,7 +200,7 @@ class Yolov8Detector():
 
                     try:
                         # Inference
-                        results = self.model(cv2_img, conf=threshold, verbose=False)
+                        results = self.model(cv2_img, conf=threshold, verbose=False, device=self.device)
                         #self.msg_if.pub_warn("Got Yolov8 detection results: " + str(results[0].boxes))
                 
                         #self.msg_if.pub_warn("Got Yolov8 detection results: " + str(results[0].boxes))
