@@ -198,7 +198,13 @@ class Yolov8Detector():
 
                     try:
                         # Inference
-                        results = self.model(cv2_img, conf=threshold, verbose=False, device=self.device)
+                        start_time = nepi_sdk.get_time()
+
+                        results = self.model(cv2_img, conf=threshold, verbose=False) #, device=self.device)
+                        
+                        detect_time = round( (nepi_sdk.get_time() - start_time) , 3)
+                        #self.msg_if.pub_info("Detector Detect Time: {:.2f}".format(detect_time))
+
                         #self.msg_if.pub_warn("Got Yolov8 detection results: " + str(results[0].boxes))
                 
                         #self.msg_if.pub_warn("Got Yolov8 detection results: " + str(results[0].boxes))
