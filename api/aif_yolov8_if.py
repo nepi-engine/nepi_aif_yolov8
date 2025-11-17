@@ -41,7 +41,7 @@ TEST_AI_DICT = {
 'if_module_name': 'aif_yolov8_if', 
 'if_class_name': 'Yolov8AIF', 
 'models_folder_name': 'yolov8', 
-'launch_pkg_name': 'nepi_aif_yolov8',
+'pkg_name': 'nepi_aif_yolov8',
 'launch_file_name': 'yolov8_ros.launch', 
 'node_file_name': 'nepi_ai_yolov8_detection_node.py',  
 'active': True
@@ -58,6 +58,9 @@ class Yolov8AIF(object):
 
     ai_node_dict = dict()
     def __init__(self, aif_dict,launch_namespace, mgr_namespace, models_lib_path):
+      self.pkg_name = aif_dict['pkg_name']
+      self.log_name = self.pkg_name
+      nepi_sdk.log_msg_warn(self.log_name + " Instantiating with aif_dict: " +str(aif_dict))
       if launch_namespace[-1] == "/":
         launch_namespace = launch_namespace[:-1]
       self.launch_namespace = launch_namespace  
@@ -66,15 +69,10 @@ class Yolov8AIF(object):
         mgr_namespace = mgr_namespace[:-1]
       self.mgr_namespace = mgr_namespace
       self.models_lib_path = models_lib_path
-      self.pkg_name = aif_dict['pkg_name']
-      self.log_name = self.pkg_name
+
       self.node_file_dict = aif_dict['node_file_dict']
-      self.launch_pkg = aif_dict['launch_pkg_name']
-      self.launch_file = aif_dict['launch_file_name']
       self.models_folder = aif_dict['models_folder_name']
       self.models_folder_path =  os.path.join(self.models_lib_path, self.models_folder)
-      nepi_sdk.log_msg_info("Yolov8 models path: " + self.models_folder_path)
-
     
     #################
     # Yolov8 Model Functions
@@ -82,38 +80,38 @@ class Yolov8AIF(object):
     def getModelsDict(self):
         models_dict = dict()
         # Try to obtain the path to Yolov8 models from the system_mgr
-        #nepi_sdk.log_msg_debug(self.log_name + ": Looking for model files in folder: " + self.models_folder_path)
+        nepi_sdk.log_msg_debug(self.log_name + ": Looking for model files in folder: " + self.models_folder_path)
         # Grab the list of all existing yolov8 cfg files
         if os.path.exists(self.models_folder_path) == False:
             nepi_sdk.log_msg_debug(self.log_name + ": Failed to find models folder: " + self.models_folder_path)
             return models_dict
         else:
             self.cfg_files = glob.glob(os.path.join(self.models_folder_path,'*.yaml'))
-            #nepi_sdk.log_msg_info(self.log_name + ": Found network config files: " + str(self.cfg_files))
+
             # Remove the ros.yaml file -- that one doesn't represent a selectable trained neural net
             for f in self.cfg_files:
                 cfg_dict = dict()
                 success = False
                 try:
-                    #nepi_sdk.log_msg_warn(self.log_name + ": Opening yaml file: " + f) 
+                    nepi_sdk.log_msg_warn(self.log_name + ": Opening yaml file: " + f) 
                     yaml_stream = open(f, 'r')
                     success = True
-                    #nepi_sdk.log_msg_warn(self.log_name + ": Opened yaml file: " + f) 
+                    nepi_sdk.log_msg_warn(self.log_name + ": Opened yaml file: " + f) 
                 except Exception as e:
                     nepi_sdk.log_msg_warn(self.log_name + ": Failed to open yaml file: " + str(e))
                 if success:
                     try:
                         # Validate that it is a proper config file and gather weights file size info for load-time estimates
-                        #nepi_sdk.log_msg_warn(self.log_name + ": Loading yaml data from file: " + f) 
+                        nepi_sdk.log_msg_warn(self.log_name + ": Loading yaml data from file: " + f) 
                         cfg_dict = yaml.load(yaml_stream, Loader=yaml.FullLoader)
                         model_keys = list(cfg_dict.keys())
                         model_key = model_keys[0]
-                        #nepi_sdk.log_msg_warn(self.log_name + ": Loaded yaml data from file: " + f) 
+                        nepi_sdk.log_msg_warn(self.log_name + ": Loaded yaml data from file: " + f) 
                     except Exception as e:
                         nepi_sdk.log_msg_warn(self.log_name + ": Failed load yaml data: " + str(e)) 
                         success = False 
                 try: 
-                    #nepi_sdk.log_msg_warn(self.log_name + ": Closing yaml data stream for file: " + f) 
+                    nepi_sdk.log_msg_warn(self.log_name + ": Closing yaml data stream for file: " + f) 
                     yaml_stream.close()
                 except Exception as e:
                     nepi_sdk.log_msg_warn(self.log_name + ": Failed close yaml file: " + str(e))
@@ -121,21 +119,21 @@ class Yolov8AIF(object):
                 if success == False:
                     nepi_sdk.log_msg_warn(self.log_name + ": File does not appear to be a valid A/I model config file: " + f + "... not adding this model")
                     continue
-                #nepi_sdk.log_msg_warn(self.log_name + ": Import success: " + str(success) + " with cfg_dict " + str(cfg_dict))
+                nepi_sdk.log_msg_warn(self.log_name + ": Import success: " + str(success) + " with cfg_dict " + str(cfg_dict))
                 cfg_dict_keys = cfg_dict[model_key].keys()
-                #nepi_sdk.log_msg_warn(self.log_name + ": Imported model key names: " + str(cfg_dict_keys))
-                #nepi_sdk.log_msg_warn(self.log_name + ": Imported model key names: " + str(cfg_dict_keys))
+                nepi_sdk.log_msg_warn(self.log_name + ": Imported model key names: " + str(cfg_dict_keys))
+                nepi_sdk.log_msg_warn(self.log_name + ": Imported model key names: " + str(cfg_dict_keys))
                 if ("framework" not in cfg_dict_keys):
                     nepi_sdk.log_msg_warn(self.log_name + ": Framework does not specified in model yaml file: " + f + "... not adding this model")
                     continue
                 if ("weight_file" not in cfg_dict_keys):
                     nepi_sdk.log_msg_warn(self.log_name + ": File does not appear to be a valid A/I model config file: " + f + "... not adding this model")
                     continue
-                #nepi_sdk.log_msg_warn(self.log_name + ": Imported model key names: " + str(cfg_dict_keys))
+                nepi_sdk.log_msg_warn(self.log_name + ": Imported model key names: " + str(cfg_dict_keys))
                 if ("image_size" not in cfg_dict_keys):
                     nepi_sdk.log_msg_warn(self.log_name + ": File does not specify a image size: " + f + "... not adding this model")
                     continue
-                #nepi_sdk.log_msg_warn(self.log_name + ": Imported model key names: " + str(cfg_dict_keys))
+                nepi_sdk.log_msg_warn(self.log_name + ": Imported model key names: " + str(cfg_dict_keys))
                 if ("classes" not in cfg_dict_keys):
                     nepi_sdk.log_msg_warn(self.log_name + ": File does not specify a classes: " + f + "... not adding this model")
                     continue
@@ -154,7 +152,7 @@ class Yolov8AIF(object):
                
                 weight_file = cfg_dict[model_key]["weight_file"]["name"]
                 weight_file_path = os.path.join(self.models_folder_path,weight_file)
-                #nepi_sdk.log_msg_warn(self.log_name + ": Checking that model weights file exists: " + weight_file_path + " for model name " + model_name)
+                nepi_sdk.log_msg_warn(self.log_name + ": Checking that model weights file exists: " + weight_file_path + " for model name " + model_name)
                 if not os.path.exists(weight_file_path):
                     nepi_sdk.log_msg_warn(self.log_name + ": Model " + model_name + " specifies non-existent weights file " + weight_file_path + "... not adding this model")
                     continue
@@ -166,52 +164,72 @@ class Yolov8AIF(object):
                     node_file_name = self.node_file_dict[model_type]
                 model_size_mb = float(os.path.getsize(weight_file_path) / 1000000)
                 model_dict = dict()
-                try:
-                    model_dict['param_file'] = param_file
-                    model_dict['framework'] = framework
-                    model_dict['model_name'] = model_name
-                    model_dict['model_path'] = self.models_folder_path
-                    model_dict['type'] = model_type
-                    model_dict['description'] = cfg_dict[model_key]['description']['name']
-                    model_dict['img_height'] = cfg_dict[model_key]['image_size']['image_height']['value']
-                    model_dict['img_width'] = cfg_dict[model_key]['image_size']['image_width']['value']
-                    model_dict['classes'] = cfg_dict[model_key]['classes']['names']
-                    model_dict['weight_file']= weight_file
-                    model_dict['node_file_name'] = node_file_name
-                    model_dict['size'] = model_size_mb
-                    model_dict['load_time'] = self.TYPICAL_LOAD_TIME_PER_MB * model_size_mb
-                    #nepi_sdk.log_msg_info(self.log_name + ": Model dict create for model : " + model_name)
-                    #nepi_sdk.log_msg_info(self.log_name + ": Model has size MB: " + str(model_size_mb) + " and load time per MB: " + str(self.TYPICAL_LOAD_TIME_PER_MB)) 
-                    #nepi_sdk.log_msg_info(self.log_name + ": Model has an estimated load time of: " + str(model_dict['load_time']) + " seconds" ) 
-                except Exception as e:
-                    nepi_sdk.log_msg_info(self.log_name + ": Failed to get model info : " + str(e))
+
+                model_dict['param_file'] = param_file
+                model_dict['framework'] = framework
+                model_dict['model_name'] = model_name
+                model_dict['model_path'] = self.models_folder_path
+                model_dict['type'] = model_type
+                model_dict['description'] = cfg_dict[model_key]['description']['name']
+                model_dict['pkg_name'] = self.pkg_name
+                model_dict['img_height'] = cfg_dict[model_key]['image_size']['image_height']['value']
+                model_dict['img_width'] = cfg_dict[model_key]['image_size']['image_width']['value']
+                model_dict['classes'] = cfg_dict[model_key]['classes']['names']
+                model_dict['weight_file']= weight_file
+                model_dict['node_file_folder'] = os.path.join(self.launch_namespace, self.pkg_name)
+                model_dict['node_file_name'] = node_file_name
+                model_dict['size'] = model_size_mb
+                model_dict['load_time'] = self.TYPICAL_LOAD_TIME_PER_MB * model_size_mb
+                nepi_sdk.log_msg_info(self.log_name + ": Model dict create for model : " + model_name)
+                nepi_sdk.log_msg_info(self.log_name + ": Model has size MB: " + str(model_size_mb) + " and load time per MB: " + str(self.TYPICAL_LOAD_TIME_PER_MB)) 
+                nepi_sdk.log_msg_info(self.log_name + ": Model has an estimated load time of: " + str(model_dict['load_time']) + " seconds" ) 
                 models_dict[model_name] = model_dict
-        #nepi_sdk.log_msg_warn(self.log_name + "Model returning models dict" + str(models_dict))
+
+                
+        nepi_sdk.log_msg_warn(self.log_name + " Model returning models dict" + str(models_dict))
         return models_dict
 
 
-    def loadModel(self, model_dict):
-        nepi_sdk.log_msg_warn(self.log_name + "Model loading with model dict" + str(model_dict))
+    def launchModel(self, model_dict):
+        nepi_sdk.log_msg_warn(self.log_name + " Launching Model Node with model dict" + str(model_dict))
         success = False
+
         model_name = model_dict['model_name']
         node_name = model_name
-        node_namespace = os.path.join(self.launch_namespace, node_name)
-        # Build Darknet new model_name launch command
-        launch_cmd_line = [
-            "roslaunch", self.launch_pkg, self.launch_file,
-            "pkg_name:=" + self.launch_pkg,
-            "node_name:=" + node_name,
-            "node_namespace:=" + self.launch_namespace,
-            "node_file_name:=" + model_dict['node_file_name'],
-            "mgr_namespace:=" + self.mgr_namespace, 
-            "param_file_path:=" + os.path.join(model_dict['model_path'],model_dict['param_file']),
-            "weight_file_path:=" + os.path.join(model_dict['model_path'],model_dict['weight_file'])
-        ]
-        nepi_sdk.log_msg_info(self.log_name + ": Launching Yolov8 AI node " + model_name + " with commands: " + str(launch_cmd_line))
-        node_process = subprocess.Popen(launch_cmd_line)
-        self.ai_node_dict[model_name] = {'namesapce':node_namespace, 'process':node_process}
-        success = True
+        node_namespace = self.launch_namespace
+        pkg_name = model_dict['pkg_name']
+        node_file_folder = model_dict['node_file_folder']
+        node_file_name = model_dict['node_file_name']
+        
+        param_file_path = os.path.join(model_dict['model_path'],model_dict['param_file']),
+        weight_file_path = os.path.join(model_dict['model_path'],model_dict['weight_file'])
+
+
+        ###############################
+        # Launch Node
+        node_file_path = os.path.join(node_file_folder,node_file_name)
+        if self.launch_node_process is not None:
+            self.msg_if.pub_warn("Node Already Launched: " + node_name)
+        elif os.path.exists(node_file_path) == False or self.enable_image_pub == False:
+            self.msg_if.pub_warn("Could not find Node File at: " + node_file_path)
+        else: 
+
+            # Pre Set Node Params
+            param_ns = nepi_sdk.create_namespace(node_namespace,'param_file_path')
+            nepi_sdk.set_param(param_ns,param_file_path)
+
+            param_ns = nepi_sdk.create_namespace(node_namespace,'weight_file_path')
+            nepi_sdk.set_param(param_ns,weight_file_path)
+                   
+            #Try and launch node
+            nepi_sdk.log_msg_warn(self.log_name + " Launching Model Node with with inputs " + str([pkg_name, node_file_name, node_name]))
+            [success, msg, node_process] = nepi_sdk.launch_node(pkg_name, node_file_name, node_name)
+            if success == True:
+                self.ai_node_dict[model_name] = {'namesapce':node_namespace, 'process':node_process}
+            self.msg_if.pub_warn("Node launch return msg: " + str(msg))
+
         return success, node_namespace
+
 
 
     def killModel(self,model_name):

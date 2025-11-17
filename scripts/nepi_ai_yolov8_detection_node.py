@@ -20,6 +20,7 @@ print("-------------------------\nLoading YoloV8 AI DETECTOR Packages\n---------
 
 
 import os
+from io import StringIO
 import time
 import copy
 import sys
@@ -27,8 +28,6 @@ import torch
 import cv2
 import numpy as np
 
-
-from ultralytics import YOLO
 
 from nepi_sdk import nepi_sdk
 from nepi_sdk import nepi_utils
@@ -61,6 +60,13 @@ class Yolov8Detector():
         # Create Msg Class
         self.msg_if = MsgIF(log_name = self.class_name)
         self.msg_if.pub_info("Starting Node Initialization Processes")
+
+
+        ##############################  
+        # Import ultralytics here so we can message
+        self.msg_if.pub_warn("Importing ultralytics YOLO package")
+        from ultralytics import YOLO
+
 
         ##############################  
         # Initialize Class Variables

@@ -6,8 +6,6 @@ if_module_name: aif_yolov8_if
 if_class_name: Yolov8AIF
 node_file_dict: 
   detection: nepi_ai_yolov8_detection_node.py
-launch_pkg_name: nepi_aif_yolov8
-launch_file_name: yolov8_ros.launch
 models_folder_name: yolov8
 plays_well: True
 supports_preload: True
