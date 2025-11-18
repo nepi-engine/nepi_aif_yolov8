@@ -16,11 +16,8 @@
 # - mailto:nepi@numurus.com
 #
 
-print("-------------------------\nLoading YoloV8 AI DETECTOR Packages\n-------------------------")
-
 
 import os
-from io import StringIO
 import time
 import copy
 import sys
@@ -48,6 +45,8 @@ class Yolov8Detector():
     #######################
     ### Node Initialization
     DEFAULT_NODE_NAME = "ai_yolov8" # Can be overwitten by luanch command
+    MODEL_FRAMEWORK="yolov8"
+
     def __init__(self):
         ####  NODE Initialization ####
         nepi_sdk.init_node(name= self.DEFAULT_NODE_NAME)
@@ -72,16 +71,19 @@ class Yolov8Detector():
         # Initialize Class Variables
         node_params = nepi_sdk.get_param("~")
         self.msg_if.pub_info("Starting node params: " + str(node_params))
-        self.all_namespace = nepi_sdk.get_param("~all_namespace","")
+        param_namespace = nepi_sdk.create_namespace(self.node_namespace,'all_namespace')
+        self.all_namespace = nepi_sdk.get_param(param_namespace,"")
         if self.all_namespace == "":
             self.all_namespace = self.node_namespace
-        self.weight_file_path = nepi_sdk.get_param("~weight_file_path","")
+        param_namespace = nepi_sdk.create_namespace(self.node_namespace,'weight_file_path')
+        self.weight_file_path = nepi_sdk.get_param(param_namespace,"")
         if self.weight_file_path == "":
-            self.msg_if.pub_warn("Failed to get required node info from param server: ")
+            self.msg_if.pub_warn("Failed to get required node info from param server at: " + str(param_namespace))
             nepi_sdk.signal_shutdown("Failed to get valid model info from param")
         else:
             # The ai_models param is created by the launch files load network_param_file line
-            model_info = nepi_sdk.get_param("~ai_model","")
+            param_namespace = nepi_sdk.create_namespace(self.node_namespace,'ai_model')
+            model_info = nepi_sdk.get_param(param_namespace,"")
             if model_info == "":
                 self.msg_if.pub_warn("Failed to get required model info from params: ")
                 nepi_sdk.signal_shutdown("Failed to get valid model file paths")
@@ -97,8 +99,8 @@ class Yolov8Detector():
                     self.msg_if.pub_warn("Failed to get required model info from params: " + str(e))
                     nepi_sdk.signal_shutdown("Failed to get valid model file paths")
 
-                if model_framework != 'yolov8':
-                    self.msg_if.pub_warn("Model not a yolov8 model: " + model_framework)
+                if model_framework != self.MODEL_FRAMEWORK:
+                    self.msg_if.pub_warn("Model not a " + self.MODEL_FRAMEWORK  + " model: " + model_framework)
                     nepi_sdk.signal_shutdown("Model not a valid framework")
 
 

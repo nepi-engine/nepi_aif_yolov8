@@ -42,7 +42,6 @@ TEST_AI_DICT = {
 'if_class_name': 'Yolov8AIF', 
 'models_folder_name': 'yolov8', 
 'pkg_name': 'nepi_aif_yolov8',
-'launch_file_name': 'yolov8_ros.launch', 
 'node_file_name': 'nepi_ai_yolov8_detection_node.py',  
 'active': True
 }
@@ -55,9 +54,13 @@ TEST_MODELS_LIB_PATH = "/mnt/nepi_storage/ai_models/"
 
 class Yolov8AIF(object):
     TYPICAL_LOAD_TIME_PER_MB = 3.5
+    MODEL_FRAMEWORK="yolov8"
 
+
+    launch_node_process=None
     ai_node_dict = dict()
-    def __init__(self, aif_dict,launch_namespace, mgr_namespace, models_lib_path):
+
+    def __init__(self, aif_dict, launch_namespace, mgr_namespace, models_lib_path):
       self.pkg_name = aif_dict['pkg_name']
       self.log_name = self.pkg_name
       nepi_sdk.log_msg_warn(self.log_name + " Instantiating with aif_dict: " +str(aif_dict))
@@ -81,7 +84,7 @@ class Yolov8AIF(object):
         models_dict = dict()
         # Try to obtain the path to Yolov8 models from the system_mgr
         nepi_sdk.log_msg_debug(self.log_name + ": Looking for model files in folder: " + self.models_folder_path)
-        # Grab the list of all existing yolov8 cfg files
+        # Grab the list of all existing cfg files
         if os.path.exists(self.models_folder_path) == False:
             nepi_sdk.log_msg_debug(self.log_name + ": Failed to find models folder: " + self.models_folder_path)
             return models_dict
@@ -142,14 +145,11 @@ class Yolov8AIF(object):
                 framework = cfg_dict[model_key]["framework"]["name"]
                 model_name = os.path.splitext(param_file)[0]
 
-                
-                if framework != 'yolov8':
+                if framework != self.MODEL_FRAMEWORK:
                     nepi_sdk.log_msg_warn(self.log_name + ": Model " + model_name + " not a yolov3 model" + framework + "... not adding this model")
                     continue
 
 
-
-               
                 weight_file = cfg_dict[model_key]["weight_file"]["name"]
                 weight_file_path = os.path.join(self.models_folder_path,weight_file)
                 nepi_sdk.log_msg_warn(self.log_name + ": Checking that model weights file exists: " + weight_file_path + " for model name " + model_name)
@@ -176,7 +176,6 @@ class Yolov8AIF(object):
                 model_dict['img_width'] = cfg_dict[model_key]['image_size']['image_width']['value']
                 model_dict['classes'] = cfg_dict[model_key]['classes']['names']
                 model_dict['weight_file']= weight_file
-                model_dict['node_file_folder'] = os.path.join(self.launch_namespace, self.pkg_name)
                 model_dict['node_file_name'] = node_file_name
                 model_dict['size'] = model_size_mb
                 model_dict['load_time'] = self.TYPICAL_LOAD_TIME_PER_MB * model_size_mb
@@ -198,20 +197,20 @@ class Yolov8AIF(object):
         node_name = model_name
         node_namespace = self.launch_namespace
         pkg_name = model_dict['pkg_name']
-        node_file_folder = model_dict['node_file_folder']
+        node_file_folder = os.path.join("/opt/nepi/nepi_engine/lib",pkg_name)
         node_file_name = model_dict['node_file_name']
         
         param_file_path = os.path.join(model_dict['model_path'],model_dict['param_file']),
         weight_file_path = os.path.join(model_dict['model_path'],model_dict['weight_file'])
 
-
+        nepi_sdk.log_msg_warn(self.log_name + " Launching Model Node with with inputs " + str([pkg_name, node_file_name, node_name]))
         ###############################
         # Launch Node
         node_file_path = os.path.join(node_file_folder,node_file_name)
-        if self.launch_node_process is not None:
-            self.msg_if.pub_warn("Node Already Launched: " + node_name)
-        elif os.path.exists(node_file_path) == False or self.enable_image_pub == False:
-            self.msg_if.pub_warn("Could not find Node File at: " + node_file_path)
+        if model_name in self.ai_node_dict.keys():
+            nepi_sdk.log_msg_info(self.log_name + ": Node Already Launched: " + node_name)
+        elif os.path.exists(node_file_path) == False:
+            nepi_sdk.log_msg_info(self.log_name + ": Could not find Node File at: " + node_file_path)
         else: 
 
             # Pre Set Node Params
@@ -222,11 +221,11 @@ class Yolov8AIF(object):
             nepi_sdk.set_param(param_ns,weight_file_path)
                    
             #Try and launch node
-            nepi_sdk.log_msg_warn(self.log_name + " Launching Model Node with with inputs " + str([pkg_name, node_file_name, node_name]))
+            
             [success, msg, node_process] = nepi_sdk.launch_node(pkg_name, node_file_name, node_name)
             if success == True:
                 self.ai_node_dict[model_name] = {'namesapce':node_namespace, 'process':node_process}
-            self.msg_if.pub_warn("Node launch return msg: " + str(msg))
+            nepi_sdk.log_msg_info(self.log_name + ": Node launch return msg: " + str(msg))
 
         return success, node_namespace
 
