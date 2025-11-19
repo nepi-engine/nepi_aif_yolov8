@@ -60,14 +60,7 @@ class Yolov8Detector():
         self.msg_if = MsgIF(log_name = self.class_name)
         self.msg_if.pub_info("Starting Node Initialization Processes")
 
-
-        ##############################  
-        # Import ultralytics here so we can message
-        self.msg_if.pub_warn("Importing ultralytics YOLO package")
-        from ultralytics import YOLO
-
-
-        ##############################  
+       ##############################  
         # Initialize Class Variables
         node_params = nepi_sdk.get_param("~")
         self.msg_if.pub_info("Starting node params: " + str(node_params))
@@ -117,6 +110,11 @@ class Yolov8Detector():
                     if cuda_count > 0:
                         self.device = 'cuda'
 
+
+                ##############################  
+                # Import ultralytics here so we can message
+                self.msg_if.pub_warn("Importing ultralytics YOLO package")
+                from ultralytics import YOLO
                 self.msg_if.pub_warn("Loading model: " + self.node_name)
                 self.model = YOLO(self.weight_file_path)
 

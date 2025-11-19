@@ -195,7 +195,7 @@ class Yolov8AIF(object):
 
         model_name = model_dict['model_name']
         node_name = model_name
-        node_namespace = self.launch_namespace
+        node_namespace = os.path.join(self.launch_namespace,node_name)
         pkg_name = model_dict['pkg_name']
         node_file_folder = os.path.join("/opt/nepi/nepi_engine/lib",pkg_name)
         node_file_name = model_dict['node_file_name']
