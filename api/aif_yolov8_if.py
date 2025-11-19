@@ -78,11 +78,11 @@ class Yolov8AIF(object):
       self.models_folder_path =  os.path.join(self.models_lib_path, self.models_folder)
     
     #################
-    # Yolov8 Model Functions
+    # Model Functions
 
     def getModelsDict(self):
         models_dict = dict()
-        # Try to obtain the path to Yolov8 models from the system_mgr
+        # Try to obtain the path to MODEL_FRAMEWORK models from the system_mgr
         nepi_sdk.log_msg_debug(self.log_name + ": Looking for model files in folder: " + self.models_folder_path)
         # Grab the list of all existing cfg files
         if os.path.exists(self.models_folder_path) == False:
@@ -146,7 +146,7 @@ class Yolov8AIF(object):
                 model_name = os.path.splitext(param_file)[0]
 
                 if framework != self.MODEL_FRAMEWORK:
-                    nepi_sdk.log_msg_warn(self.log_name + ": Model " + model_name + " not a yolov3 model" + framework + "... not adding this model")
+                    nepi_sdk.log_msg_warn(self.log_name + ": Model " + model_name + " not a MODEL_FRAMEWORK model" + framework + "... not adding this model")
                     continue
 
 
@@ -185,12 +185,12 @@ class Yolov8AIF(object):
                 models_dict[model_name] = model_dict
 
                 
-        nepi_sdk.log_msg_warn(self.log_name + " Model returning models dict" + str(models_dict))
+        #nepi_sdk.log_msg_warn(self.log_name + " Returning models dict" + str(models_dict))
         return models_dict
 
 
     def launchModel(self, model_dict):
-        nepi_sdk.log_msg_warn(self.log_name + " Launching Model Node with model dict" + str(model_dict))
+        #nepi_sdk.log_msg_warn(self.log_name + " Launching Model Node with model dict" + str(model_dict))
         success = False
 
         model_name = model_dict['model_name']
@@ -200,10 +200,10 @@ class Yolov8AIF(object):
         node_file_folder = os.path.join("/opt/nepi/nepi_engine/lib",pkg_name)
         node_file_name = model_dict['node_file_name']
         
-        param_file_path = os.path.join(model_dict['model_path'],model_dict['param_file']),
+        param_file_path = os.path.join(model_dict['model_path'],model_dict['param_file'])
         weight_file_path = os.path.join(model_dict['model_path'],model_dict['weight_file'])
 
-        nepi_sdk.log_msg_warn(self.log_name + " Launching Model Node with with inputs " + str([pkg_name, node_file_name, node_name]))
+        nepi_sdk.log_msg_warn(self.log_name + " Launching Model Node with with settings " + str([pkg_name, node_file_name, node_name]))
         ###############################
         # Launch Node
         node_file_path = os.path.join(node_file_folder,node_file_name)
@@ -214,15 +214,18 @@ class Yolov8AIF(object):
         else: 
 
             # Pre Set Node Params
+            nepi_sdk.log_msg_warn(self.log_name + " Updating model param file path param to " + str(param_file_path))
             param_ns = nepi_sdk.create_namespace(node_namespace,'param_file_path')
             nepi_sdk.set_param(param_ns,param_file_path)
 
+
+            nepi_sdk.log_msg_warn(self.log_name + " Updating model weight file path param to " + str(param_file_path))
             param_ns = nepi_sdk.create_namespace(node_namespace,'weight_file_path')
             nepi_sdk.set_param(param_ns,weight_file_path)
                    
             #Try and launch node
             
-            [success, msg, node_process] = nepi_sdk.launch_node(pkg_name, node_file_name, node_name)
+            [success, msg, node_process] = nepi_sdk.launch_node(pkg_name, node_file_name, node_name, namespace=self.launch_namespace)
             if success == True:
                 self.ai_node_dict[model_name] = {'namesapce':node_namespace, 'process':node_process}
             nepi_sdk.log_msg_info(self.log_name + ": Node launch return msg: " + str(msg))
@@ -234,7 +237,7 @@ class Yolov8AIF(object):
     def killModel(self,model_name):
         if model_name in self.ai_node_dict.keys():
             node_process = self.ai_node_dict[model_name]['process']
-            nepi_sdk.log_msg_info(self.log_name + ": Killing Yolov8 AI node: " + model_name)
+            nepi_sdk.log_msg_info(self.log_name + ": Killing MODEL_FRAMEWORK AI node: " + model_name)
             if not (None == node_process):
                 node_process.terminate()
             del self.ai_node_dict[model_name]
