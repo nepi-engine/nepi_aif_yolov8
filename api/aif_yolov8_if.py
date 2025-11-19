@@ -99,7 +99,7 @@ class Yolov8AIF(object):
                     nepi_sdk.log_msg_warn(self.log_name + ": Opening yaml file: " + f) 
                     yaml_stream = open(f, 'r')
                     success = True
-                    nepi_sdk.log_msg_warn(self.log_name + ": Opened yaml file: " + f) 
+                     #nepi_sdk.log_msg_warn(self.log_name + ": Opened yaml file: " + f) 
                 except Exception as e:
                     nepi_sdk.log_msg_warn(self.log_name + ": Failed to open yaml file: " + str(e))
                 if success:
@@ -109,12 +109,12 @@ class Yolov8AIF(object):
                         cfg_dict = yaml.load(yaml_stream, Loader=yaml.FullLoader)
                         model_keys = list(cfg_dict.keys())
                         model_key = model_keys[0]
-                        nepi_sdk.log_msg_warn(self.log_name + ": Loaded yaml data from file: " + f) 
+                         #nepi_sdk.log_msg_warn(self.log_name + ": Loaded yaml data from file: " + f) 
                     except Exception as e:
                         nepi_sdk.log_msg_warn(self.log_name + ": Failed load yaml data: " + str(e)) 
                         success = False 
                 try: 
-                    nepi_sdk.log_msg_warn(self.log_name + ": Closing yaml data stream for file: " + f) 
+                     #nepi_sdk.log_msg_warn(self.log_name + ": Closing yaml data stream for file: " + f) 
                     yaml_stream.close()
                 except Exception as e:
                     nepi_sdk.log_msg_warn(self.log_name + ": Failed close yaml file: " + str(e))
@@ -122,9 +122,8 @@ class Yolov8AIF(object):
                 if success == False:
                     nepi_sdk.log_msg_warn(self.log_name + ": File does not appear to be a valid A/I model config file: " + f + "... not adding this model")
                     continue
-                nepi_sdk.log_msg_warn(self.log_name + ": Import success: " + str(success) + " with cfg_dict " + str(cfg_dict))
+                 #nepi_sdk.log_msg_warn(self.log_name + ": Import success: " + str(success) + " with cfg_dict " + str(cfg_dict))
                 cfg_dict_keys = cfg_dict[model_key].keys()
-                nepi_sdk.log_msg_warn(self.log_name + ": Imported model key names: " + str(cfg_dict_keys))
                 nepi_sdk.log_msg_warn(self.log_name + ": Imported model key names: " + str(cfg_dict_keys))
                 if ("framework" not in cfg_dict_keys):
                     nepi_sdk.log_msg_warn(self.log_name + ": Framework does not specified in model yaml file: " + f + "... not adding this model")
@@ -132,11 +131,9 @@ class Yolov8AIF(object):
                 if ("weight_file" not in cfg_dict_keys):
                     nepi_sdk.log_msg_warn(self.log_name + ": File does not appear to be a valid A/I model config file: " + f + "... not adding this model")
                     continue
-                nepi_sdk.log_msg_warn(self.log_name + ": Imported model key names: " + str(cfg_dict_keys))
                 if ("image_size" not in cfg_dict_keys):
                     nepi_sdk.log_msg_warn(self.log_name + ": File does not specify a image size: " + f + "... not adding this model")
                     continue
-                nepi_sdk.log_msg_warn(self.log_name + ": Imported model key names: " + str(cfg_dict_keys))
                 if ("classes" not in cfg_dict_keys):
                     nepi_sdk.log_msg_warn(self.log_name + ": File does not specify a classes: " + f + "... not adding this model")
                     continue
