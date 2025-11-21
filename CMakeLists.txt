@@ -119,6 +119,12 @@ endif()
  )
 
 
+## Mark other files for installation (e.g. launch and bag files, etc.)
+set( NEPI_AIF_SHARE_FOLDER 
+  # Must hard-coded 
+  ${NEPI_ENGINE}/share/nepi_aifs
+)
+
 install(DIRECTORY params/
   DESTINATION ${NEPI_AIF_SHARE_FOLDER} 
 )
