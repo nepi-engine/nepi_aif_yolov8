@@ -139,7 +139,7 @@ class Yolov8Detector():
 
             self.msg_if.pub_warn("Loading model: " + self.node_name)
             self.model = YOLO(self.weight_file_path)
-
+            #self.model.half() # Reduce from INT16 to INT8
             ##############################  
 
 
