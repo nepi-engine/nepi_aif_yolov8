@@ -21,7 +21,6 @@ import os
 import time
 import copy
 import sys
-import torch
 import cv2
 import numpy as np
 
@@ -33,9 +32,6 @@ from nepi_sdk import nepi_ais
 
 from nepi_api.ai_if_detector import AiDetectorIF
 from nepi_api.messages_if import MsgIF
-
-# Define your PyTorch model and load the weights
-# model = ...
 
 
 
@@ -120,6 +116,18 @@ class Yolov8Detector():
                 nepi_sdk.signal_shutdown("Model not a valid type")
                 return
             
+
+
+
+            ##############################  
+            # Load Model
+
+            # Import ultralytics here so we can message
+            self.msg_if.pub_warn("Importing torch and ultralytics YOLO package")
+            import torch
+            from ultralytics import YOLO
+
+
             self.device = 'cpu'
             has_cuda = torch.cuda.is_available()
             self.msg_if.pub_warn("CUDA available: " + str(has_cuda))
@@ -129,14 +137,7 @@ class Yolov8Detector():
                 if cuda_count > 0:
                     self.device = 'cuda'
 
-
-            ##############################  
-            # Load Model
-
-            # Import ultralytics here so we can message
-            self.msg_if.pub_warn("Importing ultralytics YOLO package")
-            from ultralytics import YOLO
-
+            ##################################################
             self.msg_if.pub_warn("Loading model: " + self.node_name)
             self.model = YOLO(self.weight_file_path)
             #self.model.half() # Reduce from INT16 to INT8
